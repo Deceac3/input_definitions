@@ -14,6 +14,7 @@
 char* line_input();
 _Bool check(char*);
 void path_wiev(char*);
+_Bool processing(char*);
 
 char* line_input(){
     char *giga;
@@ -38,7 +39,7 @@ _Bool check(char* inp){
             }
             else
             {
-                printf("Введённый вами символ недопустим в наборе путей: %d[%c]",buf[i]);
+                printf("Error: Введённый вами символ недопустим в наборе путей: %d[%c]", buf[i]);
                 return false;
             }
         }
@@ -55,4 +56,8 @@ _Bool check(char* inp){
 
 void path_wiev(char* buf){
     printf("new path: %s", buf);
+}
+
+_Bool processing(char* buf){
+    
 }

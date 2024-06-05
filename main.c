@@ -3,7 +3,12 @@
 int main(){
     char *buf=NULL;
     buf=line_input();
-    check(buf);
+    if(!check(buf)){
+        return 0;
+    };
+    if(!processing(buf)){
+        return 0;
+    };
     path_wiev(buf);
     return 0;
 }
