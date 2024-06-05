@@ -8,6 +8,7 @@
 
 char* line_input();
 _Bool check(char*);
+void path_wiev(char*);
 
 char* line_input(){
     char *giga;
@@ -45,4 +46,8 @@ _Bool check(char* inp){
     return true;
     //Так как остальные 2 проверки нашего пути напрямую связанны с процессом преобразования строки
     //мы засунем эти функции в сам процесс преобразования строки.
+}
+
+void path_wiev(char* buf){
+    printf("new path: %s", buf);
 }
