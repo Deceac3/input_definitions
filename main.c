@@ -3,6 +3,6 @@
 int main(){
     char *buf=NULL;
     buf=line_input();
-    printf("%s \n",buf);
+    check(buf);
     return 0;
 }
