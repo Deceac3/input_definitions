@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #ifdef _WIN32
 #include <Windows.h>
 #else
@@ -11,10 +12,19 @@
 #define MAX_PATH 260
 #define DEEP_WAY 5
 
+struct new_path
+{
+    char *path;
+    size_t count;
+};
+
 char* line_input();
 _Bool check(char*);
 void path_wiev(char*);
-char* processing(char*);
+_Bool processing(struct new_path*,char*);
+
+_Bool check_c(int, char*);
+
 
 char* line_input(){
     char *giga;
@@ -33,13 +43,12 @@ _Bool check(char* inp){
             {
                 if (buf[i]=='\n')
                 {
-                    printf("Проверка на символы закончена\n");
                     break;
                 }
             }
             else
             {
-                printf("Error: Введённый вами символ недопустим в наборе путей: %d[%c]", buf[i]);
+                printf("Error: Введённый вами символ недопустим в наборе путей: %ld[%c]",i,buf[i]);
                 return false;
             }
         }
@@ -58,37 +67,70 @@ void path_wiev(char* buf){
     printf("new path: %s", buf);
 }
 
-char* processing(char* buf){
-    char *new_way= NULL;
-    _Bool first_p=true;
-    new_way = (char*)malloc(MAX_PATH*sizeof(int));
+_Bool processing(struct new_path* path,char* buf){
     for (size_t i = 0; i < MAX_PATH; i++)
     {
-        if (first_p)
+        if ((buf[i]=='c')&&(i<260-9))
         {
-            printf("%c\n",buf[i]);
-            if (buf[i]=='c')
-            {
-                /* находим первым символом c значит проверяем на cygdrive */
-                char *test=NULL;
-                test=strtok(strchr(buf, 'c'), 'cygdrive');
-                test[10] = '\0';
-                return test;
+            /* находим первым символом c значит проверяем на cygdrive */
+            if(check_c(i,buf)){
+                i += 9;
+                if (((buf[i]>='A')&&(buf[i]<='Z'))||((buf[i]>='a')&&(buf[i]<='z')))
+                {
+                    if (buf[i+1]=='\\')
+                    {
+                        path->path[path->count]=toupper(buf[i]);
+                        path->count++;
+                        path->path[path->count]='/';
+                        path->count;    // На этом моменте мы имеем 1- наименование католога 2-всё остальное пути в катологе
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                    
+                }
+                else
+                {
+                    printf("Error: ожидалось наименование каталога в %ld символе |%c|",i,buf[i]);
+                    return false;
+                }
             }
-            else if ((buf[i]>'0')&&(buf[i]<'9'))
-            {
-                /* адресация может начинаться с ip, если находим первым число, то проверяем на условия ip*/
-                return buf;
-            }
-            else if ((buf[i]==' ')||(buf[i]=='/'))
-            {
-                /* skip moment. такое может быть, что начало адреса записаное после нескольких пробеллов или после / */
-            }
-            else
-            {
-                printf("Error: путь записан неверно ...%c%c|%c|%c%c...",buf[i-2],buf[i-1],buf[i],buf[i+1],buf[i+2]);
+            else{
                 return false;
             }
         }
+        else if ((buf[i]>'0')&&(buf[i]<'9'))
+        {
+            /* адресация может начинаться с ip, если находим первым число, то проверяем на условия ip*/
+            return true;
+        }
+        else if ((buf[i]==' ')||(buf[i]=='/'))
+        {
+            /* skip moment. такое может быть, что начало адреса записаное после нескольких пробеллов или после / */
+        }
+        else if(buf[i]=='\n'){
+            return true;
+        }
+        else
+        {
+            printf("Error: путь записан неверно ...%c%c|%c|%c%c...\n",buf[i-2],buf[i-1],buf[i],buf[i+1],buf[i+2]);
+            return false;
+        }
     }
+    return false;
+}
+
+_Bool check_c(int i,char* buf){
+    char check[11] = "cygdrive\\";
+    char *bufs=NULL;
+    bufs = strstr(buf, check);
+    if(bufs!=NULL){
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+    return true;
 }
