@@ -39,7 +39,7 @@ _Bool check(char* inp){
     if (buf!=NULL)
     {
         for (size_t i = 0; i <= MAX_PATH; i++){          //Проверяем на допустимые символы. Других не должно быть вообще.
-            if (((buf[i]<'z')&&(buf[i]>'a'))||((buf[i]>'A')&&(buf[i]<'Z'))||((buf[i]>'0')&&(buf[i]<'9'))||(buf[i]=='.')||(buf[i]=='+')||(buf[i]=='\\')||(buf[i]=='/')||(buf[i]=='\n'))
+            if (((buf[i]<='z')&&(buf[i]>='a'))||((buf[i]>='A')&&(buf[i]<='Z'))||((buf[i]>='0')&&(buf[i]<='9'))||(buf[i]=='.')||(buf[i]=='+')||(buf[i]=='\\')||(buf[i]=='/')||(buf[i]=='\n'))
             {
                 if (buf[i]=='\n')
                 {
