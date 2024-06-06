@@ -6,7 +6,7 @@ int main(){
     if(!check(buf)){
         return 0;
     };
-    if(!processing(buf)){
+    if(buf=processing(buf)==NULL){
         return 0;
     };
     path_wiev(buf);

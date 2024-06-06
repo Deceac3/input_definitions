@@ -14,7 +14,7 @@
 char* line_input();
 _Bool check(char*);
 void path_wiev(char*);
-_Bool processing(char*);
+char* processing(char*);
 
 char* line_input(){
     char *giga;
@@ -28,7 +28,7 @@ _Bool check(char* inp){
     buf = strtok(inp,"\0");
     if (buf!=NULL)
     {
-        for (size_t i = 0; i <= sizeof(buf); i++){          //Проверяем на допустимые символы. Других не должно быть вообще.
+        for (size_t i = 0; i <= MAX_PATH; i++){          //Проверяем на допустимые символы. Других не должно быть вообще.
             if (((buf[i]<'z')&&(buf[i]>'a'))||((buf[i]>'A')&&(buf[i]<'Z'))||((buf[i]>'0')&&(buf[i]<'9'))||(buf[i]=='.')||(buf[i]=='+')||(buf[i]=='\\')||(buf[i]=='/')||(buf[i]=='\n'))
             {
                 if (buf[i]=='\n')
@@ -58,6 +58,37 @@ void path_wiev(char* buf){
     printf("new path: %s", buf);
 }
 
-_Bool processing(char* buf){
-    
+char* processing(char* buf){
+    char *new_way= NULL;
+    _Bool first_p=true;
+    new_way = (char*)malloc(MAX_PATH*sizeof(int));
+    for (size_t i = 0; i < MAX_PATH; i++)
+    {
+        if (first_p)
+        {
+            printf("%c\n",buf[i]);
+            if (buf[i]=='c')
+            {
+                /* находим первым символом c значит проверяем на cygdrive */
+                char *test=NULL;
+                test=strtok(strchr(buf, 'c'), 'cygdrive');
+                test[10] = '\0';
+                return test;
+            }
+            else if ((buf[i]>'0')&&(buf[i]<'9'))
+            {
+                /* адресация может начинаться с ip, если находим первым число, то проверяем на условия ip*/
+                return buf;
+            }
+            else if ((buf[i]==' ')||(buf[i]=='/'))
+            {
+                /* skip moment. такое может быть, что начало адреса записаное после нескольких пробеллов или после / */
+            }
+            else
+            {
+                printf("Error: путь записан неверно ...%c%c|%c|%c%c...",buf[i-2],buf[i-1],buf[i],buf[i+1],buf[i+2]);
+                return false;
+            }
+        }
+    }
 }
