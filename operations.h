@@ -70,9 +70,9 @@ void path_wiev(char* buf){
 _Bool processing(struct new_path* path,char* buf){
     for (size_t i = 0; i < MAX_PATH; i++)
     {
-        if ((buf[i]=='c')&&(i<260-9))
+        if ((buf[i]=='c')&&(i<260))
         {
-            /* находим первым символом c значит проверяем на cygdrive */
+            /* находим первым символом c значит проверяем на cygdrive\ */
             if(check_c(i,buf)){
                 i += 9;
                 if (((buf[i]>='A')&&(buf[i]<='Z'))||((buf[i]>='a')&&(buf[i]<='z')))
@@ -81,14 +81,19 @@ _Bool processing(struct new_path* path,char* buf){
                     {
                         path->path[path->count]=toupper(buf[i]);
                         path->count++;
+                        path->path[path->count]=':';
+                        path->count++;
                         path->path[path->count]='/';
-                        path->count;    // На этом моменте мы имеем 1- наименование католога 2-всё остальное пути в катологе
+                        path->count++;    // На этом моменте мы имеем 1- наименование католога 2-всё остальное пути в катологе
+                        i++;
+                        printf("Всё хорошо, записали путь еее\n");
+                        return true;
                     }
                     else
                     {
+                        printf("Error: ожидалось '\\' на символе %ld |%c|\n", i+1,buf[i+1]);
                         return false;
                     }
-                    
                 }
                 else
                 {
@@ -97,6 +102,7 @@ _Bool processing(struct new_path* path,char* buf){
                 }
             }
             else{
+                printf("Error: неверно записан путь\n");
                 return false;
             }
         }
@@ -104,10 +110,6 @@ _Bool processing(struct new_path* path,char* buf){
         {
             /* адресация может начинаться с ip, если находим первым число, то проверяем на условия ip*/
             return true;
-        }
-        else if ((buf[i]==' ')||(buf[i]=='/'))
-        {
-            /* skip moment. такое может быть, что начало адреса записаное после нескольких пробеллов или после / */
         }
         else if(buf[i]=='\n'){
             return true;
@@ -118,6 +120,7 @@ _Bool processing(struct new_path* path,char* buf){
             return false;
         }
     }
+    printf("почему\n");
     return false;
 }
 
@@ -132,5 +135,4 @@ _Bool check_c(int i,char* buf){
     {
         return false;
     }
-    return true;
 }
