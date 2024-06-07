@@ -39,7 +39,7 @@ _Bool check(char* inp){
     if (buf!=NULL)
     {
         for (size_t i = 0; i <= MAX_PATH; i++){          //Проверяем на допустимые символы. Других не должно быть вообще.
-            if (((buf[i]<='z')&&(buf[i]>='a'))||((buf[i]>='A')&&(buf[i]<='Z'))||((buf[i]>='0')&&(buf[i]<='9'))||(buf[i]=='.')||(buf[i]=='+')||(buf[i]=='\\')||(buf[i]=='/')||(buf[i]=='\n'))
+            if (((buf[i]<='z')&&(buf[i]>='a'))||((buf[i]>='A')&&(buf[i]<='Z'))||((buf[i]>='0')&&(buf[i]<='9'))||(buf[i]=='.')||(buf[i]=='+')||(buf[i]=='\\')||(buf[i]=='/')||(buf[i]=='\n')||(buf[i]==':'))
             {
                 if (buf[i]=='\n')
                 {
@@ -68,24 +68,147 @@ void path_wiev(char* buf){
 }
 
 _Bool processing(struct new_path* path,char* buf){
+    _Bool path_poz= true;
     for (size_t i = 0; i < MAX_PATH; i++)
     {
-        if ((buf[i]=='c')&&(i<260))
+        if (path_poz)
         {
-            /* находим первым символом c значит проверяем на cygdrive\ */
-            if(check_c(i,buf)){
-                i += 9;
-                if (((buf[i]>='A')&&(buf[i]<='Z'))||((buf[i]>='a')&&(buf[i]<='z')))
-                {
-                    if (buf[i+1]=='\\')
+            if ((buf[i]=='c')&&(i<260))
+            {
+                /* находим первым символом c значит проверяем на cygdrive/ */
+                if(check_c(i,buf)){
+                    i += 9;
+                    if (((buf[i]>='A')&&(buf[i]<='Z'))||((buf[i]>='a')&&(buf[i]<='z')))
                     {
-                        path->path[path->count]=toupper(buf[i]);
-                        path->count++;
+                        if (buf[i+1]=='/')
+                        {
+                            path->path[path->count]=toupper(buf[i]);
+                            path->count++;
+                            path->path[path->count]=':';
+                            path->count++;
+                            path->path[path->count]='\\';
+                            path->count++;    // На этом моменте мы имеем 1- наименование католога 2-всё остальное пути в катологе
+                            i+=2;
+                            _Bool ccheck = true;
+                            int count = 0;
+                            while (ccheck)
+                            {
+                                if (count <=4){
+                                    if(path_control(path,&i,buf)){
+                                        if (buf[i]=='+')
+                                        {
+                                            path_poz = false;
+                                            ccheck = false;
+                                        }
+                                        else if (buf[i]=='\n')
+                                        {
+                                            return true;
+                                        }
+                                        else{
+                                            count++;
+                                            i++;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        return false;
+                                    }
+                                }
+                                else
+                                {
+                                    printf("Error: длинна одного стандартного пути не может превышать 5 эллементов\n");
+                                    return false;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            printf("Error: ожидалось '/' на символе %ld |%c|\n", i+1,buf[i+1]);
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        printf("Error: ожидалось наименование каталога в %ld символе |%c|",i,buf[i]);
+                        return false;
+                    }
+                }
+                else{
+                    printf("Error: неверно записан путь\n");
+                    return false;
+                }
+            }
+            else if ((buf[i]>='0')&&(buf[i]<='9'))
+            {
+                /* 
+                адресация может начинаться с ip, если находим первым число, то проверяем на условия ip
+                Так как мы подключаемся к удалённому серверу по индксу, нам не нужно узнавать его наименование корня дерева
+                */
+                _Bool ip_check=true;
+                size_t numbs=0;
+                int count=0;
+                char ip[4];
+                ip[0]=' ';
+                ip[1]=' ';
+                ip[2]=' ';
+                ip[3]=' ';
+                while (ip_check)
+                {
+                    if ((count<4))
+                    {
+                        if (((buf[i+1]=='.')||((numbs==3)&&(buf[i+1]==':')))&&(buf[i]>='0')&&(buf[i]<='9'))
+                        {
+                            ip[count] = buf[i]; 
+                            if (strtol(ip, NULL,10)<=255)
+                            {
+                                path->path[path->count]=buf[i];
+                                path->count++;
+                                if (numbs<3)
+                                {
+                                    path->path[path->count]='.';
+                                    path->count++;
+                                }
+                                count=0;
+                                i+=2;
+                                numbs++;
+                                ip[0]=' ';
+                                ip[1]=' ';
+                                ip[2]=' ';
+                                ip[3]=' ';
+                            }
+                            else
+                            {
+                                printf("Error: введённый ip адрес не соответствует стандарту и он не должен быть больше 255 %s - %ld|%ld\n",ip,strtol(ip, NULL,10),numbs);
+                                return false;
+                            }
+                        }
+                        else if ((buf[i]>='0')&&(buf[i]<='9'))
+                        {
+                            path->path[path->count]=buf[i];
+                            path->count++;
+                            ip[count] = buf[i];
+                            count++;
+                            i++;
+                        }
+                        else
+                        {
+                            printf("Error: ip-адрес не может содержать никаких других символов, кроме 0-9\n");
+                            return false;
+                        }
+                        
+                    }
+                    else
+                    {
+                        printf("Error: значение ip записано неверно\n");
+                        return false;
+                    }
+                    if (numbs==4)
+                    {
                         path->path[path->count]=':';
                         path->count++;
-                        path->path[path->count]='/';
-                        path->count++;    // На этом моменте мы имеем 1- наименование католога 2-всё остальное пути в катологе
-                        i++;
+                        path->path[path->count]='\\';
+                        path->count++;
+                        i ++;
                         _Bool ccheck = true;
                         int count = 0;
                         while (ccheck)
@@ -94,9 +217,8 @@ _Bool processing(struct new_path* path,char* buf){
                                 if(path_control(path,&i,buf)){
                                     if (buf[i]=='+')
                                     {
-                                        printf("путь записан");
+                                        path_poz = false;
                                         ccheck = false;
-                                        i++;
                                     }
                                     else if (buf[i]=='\n')
                                     {
@@ -119,43 +241,26 @@ _Bool processing(struct new_path* path,char* buf){
                             }
                         }
                     }
-                    else
-                    {
-                        printf("Error: ожидалось '\\' на символе %ld |%c|\n", i+1,buf[i+1]);
-                        return false;
-                    }
+                    
                 }
-                else
-                {
-                    printf("Error: ожидалось наименование каталога в %ld символе |%c|",i,buf[i]);
-                    return false;
-                }
+                return true;
             }
-            else{
-                printf("Error: неверно записан путь\n");
+            else if(buf[i]=='\n'){
+                return true;
+            }
+            else
+            {
+                printf("Error: путь записан неверно ...%c%c|%c|%c%c...\n",buf[i-2],buf[i-1],buf[i],buf[i+1],buf[i+2]);
                 return false;
             }
         }
-        else if ((buf[i]>'0')&&(buf[i]<'9'))
-        {
-            /* адресация может начинаться с ip, если находим первым число, то проверяем на условия ip*/
-            return true;
-        }
-        else if(buf[i]=='\n'){
-            return true;
-        }
-        else
-        {
-            printf("Error: путь записан неверно ...%c%c|%c|%c%c...\n",buf[i-2],buf[i-1],buf[i],buf[i+1],buf[i+2]);
-            return false;
-        }
     }
-    printf("почему\n");
+    printf("Error; invalid\n");
     return false;
 }
 
 _Bool check_c(int i,char* buf){
-    char check[11] = "cygdrive\\";
+    char check[11] = "cygdrive/";
     char *bufs=NULL;
     bufs = strstr(buf, check);
     if(bufs!=NULL){
@@ -192,14 +297,16 @@ _Bool path_control(struct new_path *path, size_t* i, char *buf){
                 return false;
             }
         }
-        else if (buf[*i]=='\\')
+        else if (buf[*i]=='/')
         {
-            path->path[path->count]='/';
+            path->path[path->count]='\\';
             path->count++;
             return true;
         }
         else if (buf[*i]=='+')
         {
+            path->path[path->count]=buf[*i];
+            path->count++;
             return true;
         }
         else if (buf[*i]=='\n')
